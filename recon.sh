@@ -107,7 +107,12 @@ curl -s https://sonar.omnisint.io/tlds/$TARGET | jq -r '.[]' | sort -u > tlds_so
 curl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u > all_tlds_sonar.txt
 (echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u\n${SEPARATOR}\n" && cat all_tlds_sonar.txt) > sonar1 && mv sonar1 all_tlds_sonar.txt
 
-curl -s "https://crt.sh/?q=${TARGET}&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u > ${TARGET}_crt.txt
-(echo "${SEPARATOR}\nCMD:curl -s \"https://crt.sh/?q=${TARGET}&output=json\" | jq -r '.[] | \"\(.name_value)\n\(.common_name)\"' | sort -u\n\n${SEPARATOR}\n" && cat ${TARGET}_crt.txt) > crt1 && mv crt1 ${TARGET}_crt.txt
+curl -s "https://crt.sh/?q=$TARGET&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u > crt_crt.sh_$TARGET.txt
+(echo "${SEPARATOR}\nCMD:\ncurl -s \"https://crt.sh/?q=${TARGET}&output=json\" | jq -r '.[] | \"\(.name_value)\n\(.common_name)\"' | sort -u\n\n${SEPARATOR}\n" && cat crt_crt.sh_${TARGET}.txt) > crt1 && mv crt1 crt_crt.sh_${TARGET}.txt
+
+openssl s_client -ign_eof 2>/dev/null <<<$'HEAD / HTTP/1.0\r\n\r' -connect "opensea.io:443" | openssl x509 -noout -text -in - | grep 'DNS' | sed -e 's|DNS:|\n|g' -e 's|^\*.*||g' | tr -d ',' | sort -u
+
+#openssl s_client -ign_eof 2>/dev/null <<<$'HEAD / HTTP/1.0\r\n\r' -connect "$TARGET:443" | openssl x509 -noout -text -in - | grep 'DNS' | sed -e 's|DNS:|\n|g' -e 's|^\*.*||g' | tr -d ',' | sort -u > crt_openssl_${TARGET}.txt
+#$(echo "${SEPARATOR}\nCMD:openssl s_client -ign_eof 2>/dev/null <<<$'HEAD / HTTP/1.0\r\n\r' -connect "${TARGET}:443" | openssl x509 -noout -text -in - | grep 'DNS' | sed -e 's|DNS:|\n|g' -e 's|^\*.*||g' | tr -d ',' | sort -u\n" && cat crt_crt.sh_${TARGET}.txt) > crt1 && mv crt1 crt_openssl_${TARGET}.txt
 
 echo "\nDone\nResults written in recon_$TARGET directory"
