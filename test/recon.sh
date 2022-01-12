@@ -6,8 +6,7 @@ BOLDRED="\e[1;${RED}m"
 BOLDGREEN="\e[1;${GREEN}m"
 ENDCOLOR="\e[0m"
 SEPARATOR="##################################################################################"
-
-echo -e "                    ,.ood888888888888boo.,
+BANNER="                    ,.ood888888888888boo.,
               .od888P^\"\"            \"\"^Y888bo.
           .od8P''   ..oood88888888booo.    \`\`Y8bo.
        .odP'\"  .ood8888888888888888888888boo.  \"\`Ybo.
@@ -31,9 +30,11 @@ echo -e "                    ,.ood888888888888boo.,
 TARGET=$1
 
 if [ "$#" -ne 1 ]; then
-  echo "Usage: sh recon.sh <url>" >&2
+  echo "Usage: sudo sh recon.sh <url>" >&2
   exit 1
 fi
+
+echo ${BANNER}
 
 if ping -c 1 -W 1 "$TARGET" > /dev/null 2> /dev/null; then
   echo "OK: Target ->> $TARGET <<-"
@@ -55,42 +56,58 @@ if [ -d "recon_$TARGET" ]; then
 
 fi
 
+if ! [ -x "$(command -v jq)" ]; then
+  echo 'Download and installation of jq.\n' >&2
+  sudo apt install jq
+  exit 1
+fi
+
 mkdir recon_$TARGET
 cd recon_$TARGET
-mkdir passive_gathering
-cd passive_gathering
 
 whois $TARGET > whois.txt
 (echo "${SEPARATOR}\nCMD: whois $TARGET\n${SEPARATOR}#" && cat whois.txt) > whois1 && mv whois1 whois.txt
 
-nslookup $TARGET > nslookup.txt
-(echo "${SEPARATOR}\nCMD: nslookup $TARGET\n${SEPARATOR}\n" && cat nslookup.txt) > nslookup1 && mv nslookup1 nslookup.txt
+nslookup $TARGET > dns_nslookup.txt
+(echo "${SEPARATOR}\nCMD: nslookup $TARGET\n${SEPARATOR}\n" && cat dns_nslookup.txt) > nslookup1 && mv nslookup1 dns_nslookup.txt
 
-dig $TARGET > dig.txt
-(echo "${SEPARATOR}\nCMD:\ndig $TARGET\n${SEPARATOR}\n" && cat dig.txt) > dig1 && mv dig1 dig.txt
+dig $TARGET > dns_dig.txt
+(echo "${SEPARATOR}\nCMD:\ndig $TARGET\n${SEPARATOR}\n" && cat dns_dig.txt) > dig1 && mv dig1 dns_dig.txt
 
-echo "${SEPARATOR}\nCMD:\nnslookup -query=A $TARGET\n${SEPARATOR}\n" >> nslookup.txt
-nslookup -query=A $TARGET >> nslookup.txt
+echo "${SEPARATOR}\nCMD:\nnslookup -query=A $TARGET\n${SEPARATOR}\n" >>dns_nslookup.txt
+nslookup -query=A $TARGET >>dns_nslookup.txt
 
-echo "${SEPARATOR}\nCMD:\ndig -a $TARGET\n${SEPARATOR}" >> dig.txt
-dig a $TARGET >> dig.txt
+echo "${SEPARATOR}\nCMD:\ndig -a $TARGET\n${SEPARATOR}" >> dns_dig.txt
+dig a $TARGET >> dns_dig.txt
 
-echo "${SEPARATOR}\nCMD:\nnslookup -query=PTR $TARGET\n${SEPARATOR}\n" >> nslookup.txt
-nslookup -query=PTR $TARGET >> nslookup.txt
+echo "${SEPARATOR}\nCMD:\nnslookup -query=PTR $TARGET\n${SEPARATOR}\n" >>dns_nslookup.txt
+nslookup -query=PTR $TARGET >> dns_nslookup.txt
 
-echo "${SEPARATOR}\nCMD:\ndig -x $TARGET\n${SEPARATOR}" >> dig.txt
-dig -x $TARGET >> dig.txt
+echo "${SEPARATOR}\nCMD:\ndig -x $TARGET\n${SEPARATOR}" >> dns_dig.txt
+dig -x $TARGET >> dns_dig.txt
 
-echo "${SEPARATOR}\nCMD:\nnslookup -query=TXT $TARGET\n${SEPARATOR}\n" >> nslookup.txt
-nslookup -query=TXT $TARGET >> nslookup.txt
+echo "${SEPARATOR}\nCMD:\nnslookup -query=TXT $TARGET\n${SEPARATOR}\n" >> dns_nslookup.txt
+nslookup -query=TXT $TARGET >> dns_nslookup.txt
 
-echo "${SEPARATOR}\nCMD:\ndig txt $TARGET\n${SEPARATOR}" >> dig.txt
-dig txt $TARGET >> dig.txt
+echo "${SEPARATOR}\nCMD:\ndig txt $TARGET\n${SEPARATOR}" >> dns_dig.txt
+dig txt $TARGET >> dns_dig.txt
 
-echo "${SEPARATOR}\nCMD:\nnslookup -query=MX $TARGET\n${SEPARATOR}\n" >> nslookup.txt
-nslookup -query=MX $TARGET >> nslookup.txt
+echo "${SEPARATOR}\nCMD:\nnslookup -query=MX $TARGET\n${SEPARATOR}\n" >> dns_nslookup.txt
+nslookup -query=MX $TARGET >> dns_nslookup.txt
 
-echo "${SEPARATOR}\nCMD:\ndig mx $TARGET\n${SEPARATOR}" >> dig.txt
-dig mx $TARGET >> dig.txt
+echo "${SEPARATOR}\nCMD:\ndig mx $TARGET\n${SEPARATOR}" >> dns_dig.txt
+dig mx $TARGET >> dns_dig.txt
 
-echo "\nDone\nResults written in recon_$TARGET directory\n"
+curl -s https://sonar.omnisint.io/subdomains/$TARGET | jq -r '.[]' | sort -u > subdomains_sonar.txt
+(echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/subdomains/$TARGET | jq -r '.[]' | sort -u" && cat subdomains_sonar.txt) > sonar1 && mv sonar1 subdomains_sonar.txt
+
+curl -s https://sonar.omnisint.io/tlds/$TARGET | jq -r '.[]' | sort -u > tlds_sonar.txt
+(echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/tlds/$TARGET | jq -r '.[]' | sort -u\n${SEPARATOR}\n" && cat tlds_sonar.txt) > sonar1 && mv sonar1 tlds_sonar.txt
+
+curl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u > all_tlds_sonar.txt
+(echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u\n${SEPARATOR}\n" && cat all_tlds_sonar.txt) > sonar1 && mv sonar1 all_tlds_sonar.txt
+
+curl -s "https://crt.sh/?q=${TARGET}&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u > ${TARGET)_crt_txt
+(echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/all/${TARGET} | jq -r \'.[]\' | sort -u\n${SEPARATOR}\n" && cat ${TARGET}_crt.txt) > crt1 && mv crt1 ${TARGET}_crt.txt
+
+echo "\nDone\nResults written in recon_$TARGET directory"
