@@ -107,7 +107,7 @@ curl -s https://sonar.omnisint.io/tlds/$TARGET | jq -r '.[]' | sort -u > tlds_so
 curl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u > all_tlds_sonar.txt
 (echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/all/$TARGET | jq -r '.[]' | sort -u\n${SEPARATOR}\n" && cat all_tlds_sonar.txt) > sonar1 && mv sonar1 all_tlds_sonar.txt
 
-curl -s "https://crt.sh/?q=${TARGET}&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u > ${TARGET)_crt_txt
-(echo "${SEPARATOR}\nCMD:\ncurl -s https://sonar.omnisint.io/all/${TARGET} | jq -r \'.[]\' | sort -u\n${SEPARATOR}\n" && cat ${TARGET}_crt.txt) > crt1 && mv crt1 ${TARGET}_crt.txt
+curl -s "https://crt.sh/?q=${TARGET}&output=json" | jq -r '.[] | "\(.name_value)\n\(.common_name)"' | sort -u > ${TARGET}_crt.txt
+(echo "${SEPARATOR}\nCMD:curl -s \"https://crt.sh/?q=${TARGET}&output=json\" | jq -r '.[] | \"\(.name_value)\n\(.common_name)\"' | sort -u\n\n${SEPARATOR}\n" && cat ${TARGET}_crt.txt) > crt1 && mv crt1 ${TARGET}_crt.txt
 
 echo "\nDone\nResults written in recon_$TARGET directory"
