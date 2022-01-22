@@ -7,7 +7,8 @@ BOLDGREEN="\e[1;${GREEN}m"
 ENDCOLOR="\e[0m"
 SEPARATOR="#########################################################################"
 TARGET=$1
-MODE = 1;
+IP=0
+MODE=1;
 
 if [ "$#" -ne 1 ]; then
   echo "Usage: sudo sh recon.sh <url>" >&2
@@ -36,13 +37,6 @@ echo "\n                     ,.ood888888888888boo.,
               \`^Y888bo.,            ,.od888P^'
                    \"\`^^Y888888888888P^^'\"\n"
 
-if ping -c 1 -W 1 "$TARGET" > /dev/null 2> /dev/null; then
-  echo "OK: Target ->> $TARGET <<-"
-else
-    echo "Target $TARGET doesn't seems to be reachable"
-    exit 1
-fi
-
 if [ -d "batrecon_${TARGET}" ]; then
   echo -n "\Would you like to perform a full recon against ${TARGET} ?\n"  echo "   - 1: Perform a full recon (both passive and active)"
   echo "   - 2: Perform only passive recon"
@@ -54,6 +48,17 @@ if [ -d "batrecon_${TARGET}" ]; then
       ${MODE}=2
   fi
 fi
+
+if MODE=1;
+then
+  if ping -c 1 -W 1 "$TARGET" > /dev/null 2> /dev/null; then
+   echo "OK: Target ->> $TARGET <<-"
+  else
+      echo "Target $TARGET doesn't seems to be reachable"
+     exit 1
+  fi
+fi
+
 if [ -d "batrecon_$TARGET" ]; then
   echo -n "\nWarning: the target $TARGET already exist ...\nWould you want to relaunch the recon script and overwrite (y/N)?\n"
   old_stty_cfg=$(stty -g)
@@ -203,6 +208,17 @@ echo "   Done\n"
 
 mkdir subdomains
 echo "Runnning subdommains enumeration"
+
+mkdir host_discovery
+echo "Runnning nmap host discovery"
+
+mkdir port_scanning
+echo "Running port scan"
+sudo scan nmap 
+
+sudo nmap ${TARGET} -sn -oA tnet > ./host_discovery
+
+
 
 echo ${SEPARATOR}
 echo "Results written in recon_$TARGET directory"
