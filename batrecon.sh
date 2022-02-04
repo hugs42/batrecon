@@ -37,27 +37,28 @@ echo "\n                     ,.ood888888888888boo.,
               \`^Y888bo.,            ,.od888P^'
                    \"\`^^Y888888888888P^^'\"\n"
 
-if [ -d "batrecon_${TARGET}" ]; then
-  echo -n "\Would you like to perform a full recon against ${TARGET} ?\n"  echo "   - 1: Perform a full recon (both passive and active)"
-  echo "   - 2: Perform only passive recon"
-  old_stty_cfg=$(stty -g)
-  stty raw -echo ; answer=$(head -c 1) ; stty $old_stty_cfg
-  if echo "$answer" | grep -iq "^1" ;then
-      ${MODE}=1
-  else
-      ${MODE}=2
-  fi
-fi
+#if [ -d "batrecon_${TARGET}" ]; then
+#  echo -n "\Would you like to perform a full recon against ${TARGET} ?\n"
+#  echo "   - 1: Perform a full recon (both passive and active)\n"
+#  echo "   - 2: Perform only passive recon\n"
+#  old_stty_cfg=$(stty -g)
+#  stty raw -echo ; answer=$(head -c 1) ; stty $old_stty_cfg
+#  if echo "$answer" | grep -iq "^1" ;then
+#      ${MODE}=1
+#  else
+#      ${MODE}=2
+#  fi
+#fi
 
-if MODE=1;
-then
-  if ping -c 1 -W 1 "$TARGET" > /dev/null 2> /dev/null; then
-   echo "OK: Target ->> $TARGET <<-"
-  else
-      echo "Target $TARGET doesn't seems to be reachable"
-     exit 1
-  fi
-fi
+#if MODE=1;
+#then
+#  if ping -c 1 -W 1 "$TARGET" > /dev/null 2> /dev/null; then
+#   echo "OK: Target ->> $TARGET <<-"
+#  else
+#      echo "Target $TARGET doesn't seems to be reachable"
+#     exit 1
+#  fi
+#fi
 
 if [ -d "batrecon_$TARGET" ]; then
   echo -n "\nWarning: the target $TARGET already exist ...\nWould you want to relaunch the recon script and overwrite (y/N)?\n"
@@ -71,17 +72,60 @@ if [ -d "batrecon_$TARGET" ]; then
   fi
 fi
 
+mkdir batrecon_$TARGET
+touch ./batrecon_$TARGET/result.txt
+
+if ! [ -x "$(command -v git)" ]; then
+  echo 'Download and installation of git\n' >&2
+  sudo apt install git -y > /dev/null
+fi
+
 if ! [ -x "$(command -v jq)" ]; then
   echo 'Download and installation of jq\n' >&2
-  sudo apt install jq > /dev/null
+  sudo apt install jq -y > /dev/null
 fi
+
+if ! [ -x "$(command -v python3)" ]; then
+  echo 'Download and installation of python3\n' >&2
+  sudo apt install python3 -y > /dev/null
+fi
+
+if ! [ -x "$(command -v pip)" ]; then
+  echo 'Download and installation of pip\n' >&2
+  sudo apt install pip -y > /dev/null
+fi
+
+if ! [ -x "$(command -v dig)" ]; then
+  echo 'Download and installation of dnsutils\n' >&2
+  sudo apt install dnsutils -y > /dev/null
+fi
+
+if ! [ -x "$(command -v go)" ]; then
+  echo 'Download and installation of go\n' >&2
+  wget https://go.dev/dl/go1.17.6.linux-amd64.tar.gz > /dev/null
+  rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz > /dev/null
+  export PATH=$PATH:/usr/local/go/bin
+  rm go1.17.6.linux-amd64.tar.gz
+fi
+
+if ! [ -x "$(command -v whois)" ]; then
+  echo 'Download and installation of whois\n' >&2
+  sudo apt install whois -y > /dev/null
+fi
+
+if ! [ -x "$(command -v whatweb)" ]; then
+  echo 'Download and installation of whatweb\n' >&2
+  sudo apt install whatweb -y > /dev/null
+fi
+
 
 if ! [ -x "$(command -v theHarvester)" ]; then
   echo 'Download and installation of theHarvester.\n' >&2
+  cd batrecon_$TARGET
   git clone https://github.com/laramies/theHarvester > /dev/null
   cd theHarvester
   python3 -m pip install -r requirements/base.txt > /dev/null
-  cd ..
+  cd ./../../
 fi
 
 if ! [ -x "$(command -v aquatone)" ]; then
@@ -96,7 +140,7 @@ if ! [ -x "$(command -v waybackurls)" ]; then
   go install github.com/tomnomnom/waybackurls@latest > /dev/null
 fi
 
-mkdir batrecon_$TARGET
+#mkdir batrecon_$TARGET
 cd batrecon_$TARGET
 mkdir passive_information_gathering
 mkdir active_information_gathering
