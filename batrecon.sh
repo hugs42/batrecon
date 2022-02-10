@@ -40,7 +40,7 @@ echo "\n                     ,.ood888888888888boo.,
 #if [ -d "batrecon_${TARGET}" ]; then
 #  echo -n "\Would you like to perform a full recon against ${TARGET} ?\n"
 #  echo "   - 1: Perform a full recon (both passive and active)\n"
-#  echo "   - 2: Perform only passive recon\n"
+#  echo "   - 2: Perform passive recon\n"
 #  old_stty_cfg=$(stty -g)
 #  stty raw -echo ; answer=$(head -c 1) ; stty $old_stty_cfg
 #  if echo "$answer" | grep -iq "^1" ;then
@@ -60,20 +60,20 @@ echo "\n                     ,.ood888888888888boo.,
 #  fi
 #fi
 
-if [ -d "batrecon_$TARGET" ]; then
+if [ -d "$TARGET" ]; then
   echo -n "\nWarning: the target $TARGET already exist ...\nWould you want to relaunch the recon script and overwrite (y/N)?\n"
   old_stty_cfg=$(stty -g)
   stty raw -echo ; answer=$(head -c 1) ; stty $old_stty_cfg
   if echo "$answer" | grep -iq "^y" ;then
-      rm -rf batrecon_$TARGET
+      rm -rf $TARGET
   else
       echo "\nExit"
       exit 1
   fi
 fi
 
-mkdir batrecon_$TARGET
-touch ./batrecon_$TARGET/result.txt
+mkdir $TARGET
+touch ./$TARGET/report.txt
 
 if ! [ -x "$(command -v git)" ]; then
   echo 'Download and installation of git\n' >&2
@@ -121,7 +121,7 @@ fi
 
 if ! [ -x "$(command -v theHarvester)" ]; then
   echo 'Download and installation of theHarvester.\n' >&2
-  cd batrecon_$TARGET
+  cd $TARGET
   git clone https://github.com/laramies/theHarvester > /dev/null
   cd theHarvester
   python3 -m pip install -r requirements/base.txt > /dev/null
@@ -140,8 +140,7 @@ if ! [ -x "$(command -v waybackurls)" ]; then
   go install github.com/tomnomnom/waybackurls@latest > /dev/null
 fi
 
-#mkdir batrecon_$TARGET
-cd batrecon_$TARGET
+cd $TARGET
 mkdir passive_information_gathering
 mkdir active_information_gathering
 cd passive_information_gathering
@@ -242,25 +241,25 @@ mkdir http_headers
 curl -I ${TARGET} > ./http_headers/${TARGET}_headers
 echo "    Done\n"
 echo "Running recognition of web technologies ..."
+
 mkdir whatweb
-whatweb ${TARGET} > ./whatweb/${TARGET}_whatweb
+whatweb ${TARGET} -v > ./whatweb/${TARGET}_whatweb
 echo "    Done\n"
 echo "Running web application firewall fingerprinting"
 mkdir Waf
 wafw00f -v ${TARGET} > ${TARGET}_wafw00f
 echo "   Done\n"
 
-mkdir subdomains
-echo "Runnning subdommains enumeration"
+#mkdir subdomains
+#echo "Runnning subdommains enumeration"
 
-mkdir host_discovery
-echo "Runnning nmap host discovery"
+#mkdir host_discovery
+#echo "Runnning nmap host discovery"
 
-mkdir port_scanning
-echo "Running port scan"
-sudo scan nmap 
-
-sudo nmap ${TARGET} -sn -oA tnet > ./host_discovery
+#mkdir port_scanning
+#echo "Running port scan"
+#sudo scan nmap 
+#sudo nmap ${TARGET} -sn -oA tnet > ./host_discovery
 
 
 
